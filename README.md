@@ -1,52 +1,49 @@
-Description pour “Followersexpress Ultimate Full Auto Indexer”
-Le plugin WordPress ultime pour centraliser, indexer, propulser et référencer automatiquement n’importe quel site ou projet, quel que soit le domaine : e-commerce, service, média, réseaux sociaux, business, niches, etc.
+# Followersexpress Ultra Indexer Ultimate
 
-Followersexpress Ultimate Full Auto Indexer
-Booste instantanément la visibilité de votre site grâce à un système d’indexation et de backlinks massif, totalement automatisé et sans aucune configuration nécessaire.
+Plugin WordPress pour automatiser l'indexation et la création de backlinks à grande échelle.
 
-Fonctionnalités clés :
-Indexation automatique sur +300 services : moteurs de recherche, agrégateurs, crawlers spécialisés.
+## Installation
+1. Copier tout le dossier dans `wp-content/plugins/followersexpress-indexer`.
+2. Activer le plugin depuis l'administration WordPress.
+3. Éditer les fichiers de listes si nécessaire.
 
-Création de backlinks instantanés sur des plateformes dédiées à la visibilité et à l’autorité SEO (annuaires, indexeurs, outils SMM, social signals).
+## Fonctionnalités
+- Ping de plus de 300 moteurs de recherche.
+- Soumission à plus de 200 annuaires et indexeurs.
+- Création de backlinks sur plus de 200 plateformes dédiées.
+- Génération et enrichissement automatique de `robots.txt`.
+- Déclenchement par mots‑clés via WP‑Cron ou en temps réel.
+- Ping et soumissions envoyés dans un ordre aléatoire avec rotation d'user‑agents (200 bots) pour contourner les filtres.
 
-Soumission intelligente à des annuaires spécialisés et des services de référencement, quel que soit le secteur (adultes, SMM, e-commerce, corporate…).
+## Stack technique
+- PHP 7+ / WordPress.
+- WP‑Cron pour l'automatisation.
+- Listes de services stockées dans des fichiers texte.
 
-robots.txt généré automatiquement : structure ultra-optimisée pour laisser passer tous les robots d’indexation utiles (Google, Bing, Yandex, Ahrefs, Semrush, Discord, Telegram, etc.)
+## Structure des dossiers
+```
+/ (racine du plugin)
+├── seoautomatique.php   # cœur du plugin
+├── moteur.php           # script CLI de ping
+├── moteurlist.txt       # services de ping
+├── directory_sites.txt  # annuaires
+├── backlink_sites.txt   # plateformes de backlinks
+└── robotindex.txt       # user‑agents additionnels
+```
 
-Déclenchement automatique dès qu’un contenu contient un mot-clé stratégique : achat followers, likes, social media… ou tout mot-clé personnalisable.
+## Scripts de démarrage
+- `php moteur.php https://votre-site.com` : ping manuel de tous les services.
 
-Aucune intervention nécessaire : le plugin fonctionne tout seul, en tâche de fond, dès l’installation.
+## Outils recommandés
+- Éditeur de texte pour personnaliser les fichiers de listes.
+- cURL ou équivalent pour vérifier les pings.
+- Proxy/VPN pour diversifier les adresses IP lors des campagnes massives.
 
-Logs et reporting automatiques : tout ce qui est indexé, soumis, pingé ou backlinké est enregistré et consultable à tout moment.
+## Déploiement
+- Charger le plugin sur votre serveur WordPress.
+- Activer dans l'interface d'administration.
+- Vérifier les journaux générés dans le dossier `uploads`.
 
-Supporte tous les domaines (adulte, business, crypto, e-commerce, média…) sans restriction.
-
-Optimisé pour le SEO international : tous les robots, tous les annuaires, tous les indexeurs mondiaux sont sollicités.
-
-Idéal pour :
-Booster et accélérer la visibilité d’un nouveau site ou projet
-
-Centraliser et automatiser tout le SEO technique (indexation + création de liens)
-
-Générer des backlinks gratuitement sans effort
-
-Obtenir un trafic de robots, crawlers, outils d’analyse et moteurs alternatifs du monde entier
-
-Améliorer rapidement son score SEO et la détection par les agrégateurs, réseaux, plateformes sociales, outils IA, etc.
-
-Pourquoi l’utiliser ?
-Plug & Play : pas de configuration, activation instantanée.
-
-Ultra-puissant : compatible avec tous les plugins SEO et toutes les niches.
-
-100% légal et compatible avec toutes les politiques de référencement.
-
-Automatisation totale : économisez des heures de soumission manuelle, d’optimisation robots.txt, de recherche d’annuaires et d’indexeurs.
-
-Evolution continue : facilement modifiable pour ajouter de nouveaux services ou plateformes à tout moment.
-
-Followersexpress Ultimate Full Auto Indexer
-C’est le plugin WordPress le plus avancé pour ceux qui veulent que leur site soit vu, listé, indexé, référencé et propulsé PARTOUT, sans jamais lever le petit doigt.
-
-Astuce :
-Ajoute la mention "Fonctionne sur tous types de sites WordPress, WooCommerce, blogs, sites vitrine, pages SMM, landing page, etc." pour rassurer tous les utilisateurs !
+## Configuration des listes
+Les fichiers `moteurlist.txt`, `directory_sites.txt` et `backlink_sites.txt` contiennent uniquement des services réels et sont préremplis avec 300 moteurs de recherche différents (sans doublons Google), 200 annuaires et 200 plateformes de backlinks couvrant de nombreux pays et langues. Ajoutez vos propres URL, une par ligne, sans exemples fictifs. Le fichier `robotindex.txt` regroupe désormais 200 user‑agents de robots d’indexation qui seront ajoutés à `robots.txt` pour multiplier les opportunités de crawl.
+Ces user‑agents sont également utilisés pour faire varier l'`User-Agent` lors des pings afin de maximiser l'indexation.

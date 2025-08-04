@@ -75,9 +75,48 @@ function fexu_get_all_services() {
         fexu_get_backlink_services()
     );
 }
+
+// Lecture d'un fichier texte ligne par ligne avec remplacements facultatifs
+function fexu_read_list_file($filename, $default = array(), $replacements = array()) {
+    $path = plugin_dir_path(__FILE__) . $filename;
+    if (file_exists($path)) {
+        $lines = array_filter(array_map('trim', file($path)), function ($line) {
+            return $line !== '' && $line[0] !== '#';
+        });
+        if ($replacements) {
+            foreach ($lines as &$line) {
+                $line = strtr($line, $replacements);
+            }
+        }
+        return $lines;
+    }
+    return $default;
+}
+function fexu_random_user_agent() {
+    static $agents = null;
+    if ($agents === null) {
+        $path = plugin_dir_path(__FILE__) . 'robotindex.txt';
+        if (file_exists($path)) {
+            $agents = array_filter(array_map('trim', file($path)), function ($line) {
+                return $line !== '' && $line[0] !== '#';
+            });
+        } else {
+            $agents = array();
+        }
+    }
+    if ($agents) {
+        return $agents[array_rand($agents)];
+    }
+    return 'Mozilla/5.0 (compatible; FEXU/5.0; +https://wordpress.org/)';
+}
 function fexu_send_requests($urls) {
+    shuffle($urls);
     foreach ($urls as $url) {
-        wp_remote_get($url, array('timeout' => 9));
+        wp_remote_get($url, array(
+            'timeout'  => 9,
+            'blocking' => false,
+            'headers'  => array('User-Agent' => fexu_random_user_agent())
+        ));
     }
 }
 function fexu_log($message) {
@@ -202,7 +241,7 @@ function fexu_get_ping_services() {
     $opt = get_option('fexu_ping_services', array());
     if ($opt) return $opt;
     $s = urlencode(get_site_url() . '/sitemap.xml');
-    return array(
+    $default = array(
         "https://www.google.com/ping?sitemap=$s",
         "https://www.bing.com/ping?sitemap=$s",
         "https://webmaster.yandex.com/ping.xml?sitemap=$s",
@@ -216,11 +255,13 @@ function fexu_get_ping_services() {
         "http://rpc.pingomatic.com/",
         "http://rpc.twingly.com/"
     );
+    return fexu_read_list_file('moteurlist.txt', $default, array('{sitemap}' => $s, '{url}' => $s));
 }
 function fexu_get_directory_services() {
     $opt = get_option('fexu_directory_services', array());
+    if ($opt) return $opt;
     $site = urlencode(get_site_url());
-    return $opt ? $opt : array(
+    $default = array(
         "https://submit-xseo.com?site=$site",
         "https://submithub.co/auto?url=$site",
         "https://addurl.nu/?url=$site",
@@ -228,11 +269,13 @@ function fexu_get_directory_services() {
         "https://rankersparadise.com/free-seo-tools/backlink-indexer/?url=$site",
         "https://indexinjector.com/submit?url=$site"
     );
+    return fexu_read_list_file('directory_sites.txt', $default, array('{url}' => $site));
 }
 function fexu_get_backlink_services() {
     $opt = get_option('fexu_backlink_services', array());
+    if ($opt) return $opt;
     $site = urlencode(get_site_url());
-    return $opt ? $opt : array(
+    $default = array(
         "https://linkcentaur.com/?url=$site",
         "https://instantlinkindexer.com/?url=$site",
         "https://rankersparadise.com/free-seo-tools/backlink-indexer/?url=$site",
@@ -244,12 +287,18 @@ function fexu_get_backlink_services() {
         "https://www.sitelinkindexer.com/?url=$site",
         "https://submit-xseo.com?site=$site"
     );
+    return fexu_read_list_file('backlink_sites.txt', $default, array('{url}' => $site));
 }
 
 // ===== ROBOTS.TXT AUTO-AJOUT + bouton admin =====
 function fexu_update_robots_txt() {
     $robots_path = ABSPATH . 'robots.txt';
     $home = get_site_url();
+    $extra_agents = fexu_read_list_file('robotindex.txt', array());
+    $agents_block = '';
+    foreach ($extra_agents as $agent) {
+        $agents_block .= "User-agent: {$agent}\nAllow: /\n\n";
+    }
     $robots = <<<TXT
 User-agent: *
 Disallow: /wp-content/uploads/wc-logs/
@@ -271,68 +320,7 @@ Sitemap: {$home}/sitemap.rss
 Host: {$_SERVER['HTTP_HOST']}
 Crawl-delay: 1
 
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Baiduspider
-Allow: /
-
-User-agent: Yandex
-Allow: /
-
-User-agent: AhrefsBot
-Allow: /
-
-User-agent: SemrushBot
-Allow: /
-
-User-agent: MJ12bot
-Allow: /
-
-User-agent: DotBot
-Allow: /
-
-User-agent: BLEXBot
-Allow: /
-
-User-agent: PetalBot
-Allow: /
-
-User-agent: Sogou
-Allow: /
-
-User-agent: CensysInspect
-Allow: /
-
-User-agent: MegaIndex.ru
-Allow: /
-
-User-agent: GPTBot
-Allow: /
-
-User-agent: AdsBot-Google
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: FacebookExternalHit
-Allow: /
-
-User-agent: Slackbot
-Allow: /
-
-User-agent: TelegramBot
-Allow: /
-
-User-agent: Discordbot
-Allow: /
-
-User-agent: WhatsApp
-Allow: /
+$agents_block
 TXT;
     file_put_contents($robots_path, $robots);
 }
