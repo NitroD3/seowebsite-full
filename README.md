@@ -1,7 +1,8 @@
 # Followersexpress Ultra Indexer Ultimate
 
 Plugin WordPress pour automatiser l'indexation et la création de backlinks à grande échelle.
-
+https://followersexpress.com
+https://buysellfollowers.com
 ## Installation
 1. Copier tout le dossier dans `wp-content/plugins/followersexpress-indexer`.
 2. Activer le plugin depuis l'administration WordPress.
