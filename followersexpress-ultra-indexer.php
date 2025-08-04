@@ -1,33 +1,41 @@
 <?php
 /*
 Plugin Name: Followersexpress Ultra Indexer Ultimate
-Description: Indexation, backlinks, robots.txt SEO extrême, notifications, dashboard, IA ready. Ping 300+ services, annuaires, logs, cron, admin, tout inclus.
+Description: Indexation automatique, backlinks, robots.txt enrichi et notifications pour 300+ services.
 Version: 5.0
 Author: Ayden Dev
 */
 
-if (!defined('ABSPATH')) exit;
+if (!defined('ABSPATH')) {
+    exit;
+}
 
 // ===== Activation / Désactivation Cron + robots.txt =====
-register_activation_hook(__FILE__, 'fexu_activate_full');
-register_deactivation_hook(__FILE__, 'fexu_clear_cron');
+if (function_exists('register_activation_hook')) {
+    register_activation_hook(__FILE__, 'fexu_activate_full');
+    register_deactivation_hook(__FILE__, 'fexu_clear_cron');
+}
 
 function fexu_activate_full() {
     fexu_schedule_cron();
     fexu_update_robots_txt();
 }
+
 function fexu_schedule_cron() {
     if (!wp_next_scheduled('fexu_cron_hook')) {
         wp_schedule_event(time(), 'hourly', 'fexu_cron_hook');
     }
 }
+
 function fexu_clear_cron() {
     wp_clear_scheduled_hook('fexu_cron_hook');
 }
 
 // ===== Indexation par Cron et Temps réel =====
-add_action('fexu_cron_hook', 'fexu_process_posts');
-add_action('save_post', 'fexu_realtime_process', 10, 3);
+if (function_exists('add_action')) {
+    add_action('fexu_cron_hook', 'fexu_process_posts');
+    add_action('save_post', 'fexu_realtime_process', 10, 3);
+}
 
 function fexu_process_posts() {
     $keywords = fexu_get_keywords();
@@ -69,20 +77,67 @@ function fexu_realtime_process($post_ID, $post, $update) {
     }
 }
 function fexu_get_all_services() {
-    return array_merge(
+    $services = array_merge(
         fexu_get_ping_services(),
         fexu_get_directory_services(),
         fexu_get_backlink_services()
     );
+    return array_values(array_unique($services));
+}
+
+// Lecture d'un fichier texte ligne par ligne avec remplacements facultatifs
+function fexu_read_list_file($filename, $default = array(), $replacements = array()) {
+    $path = plugin_dir_path(__FILE__) . $filename;
+    if (file_exists($path)) {
+        $lines = array_filter(array_map('trim', file($path)), function ($line) {
+            return $line !== '' && $line[0] !== '#';
+        });
+        if ($replacements) {
+            foreach ($lines as &$line) {
+                $line = strtr($line, $replacements);
+            }
+        }
+        return $lines;
+    }
+    return $default;
+}
+function fexu_random_user_agent() {
+    static $agents = null;
+    if ($agents === null) {
+        $path = plugin_dir_path(__FILE__) . 'robotindex.txt';
+        if (file_exists($path)) {
+            $agents = array_filter(array_map('trim', file($path)), function ($line) {
+                return $line !== '' && $line[0] !== '#';
+            });
+        } else {
+            $agents = array();
+        }
+    }
+    if ($agents) {
+        return $agents[array_rand($agents)];
+    }
+    return 'Mozilla/5.0 (compatible; FEXU/5.0; +https://wordpress.org/)';
 }
 function fexu_send_requests($urls) {
+    shuffle($urls);
     foreach ($urls as $url) {
-        wp_remote_get($url, array('timeout' => 9));
+        $response = wp_remote_get($url, array(
+            'timeout'  => 9,
+            'blocking' => false,
+            'headers'  => array('User-Agent' => fexu_random_user_agent())
+        ));
+        if (is_wp_error($response)) {
+            fexu_log('Ping error for ' . $url . ': ' . $response->get_error_message());
+        }
     }
 }
 function fexu_log($message) {
     $upload = wp_upload_dir();
+    if (!empty($upload['error'])) {
+        return;
+    }
     $file = $upload['basedir'] . '/fexu_log.txt';
+    wp_mkdir_p(dirname($file));
     $time = date('Y-m-d H:i:s');
     file_put_contents($file, "[$time] $message\n", FILE_APPEND);
 }
@@ -109,8 +164,10 @@ function fexu_notify($msg) {
 }
 
 // === Page admin & Settings ultra-flex ===
-add_action('admin_menu', 'fexu_admin_menu');
-add_action('admin_init', 'fexu_settings_init');
+if (function_exists('add_action')) {
+    add_action('admin_menu', 'fexu_admin_menu');
+    add_action('admin_init', 'fexu_settings_init');
+}
 
 function fexu_admin_menu() {
     add_menu_page(
@@ -202,7 +259,7 @@ function fexu_get_ping_services() {
     $opt = get_option('fexu_ping_services', array());
     if ($opt) return $opt;
     $s = urlencode(get_site_url() . '/sitemap.xml');
-    return array(
+    $default = array(
         "https://www.google.com/ping?sitemap=$s",
         "https://www.bing.com/ping?sitemap=$s",
         "https://webmaster.yandex.com/ping.xml?sitemap=$s",
@@ -216,11 +273,13 @@ function fexu_get_ping_services() {
         "http://rpc.pingomatic.com/",
         "http://rpc.twingly.com/"
     );
+    return fexu_read_list_file('moteurlist.txt', $default, array('{sitemap}' => $s, '{url}' => $s));
 }
 function fexu_get_directory_services() {
     $opt = get_option('fexu_directory_services', array());
+    if ($opt) return $opt;
     $site = urlencode(get_site_url());
-    return $opt ? $opt : array(
+    $default = array(
         "https://submit-xseo.com?site=$site",
         "https://submithub.co/auto?url=$site",
         "https://addurl.nu/?url=$site",
@@ -228,11 +287,13 @@ function fexu_get_directory_services() {
         "https://rankersparadise.com/free-seo-tools/backlink-indexer/?url=$site",
         "https://indexinjector.com/submit?url=$site"
     );
+    return fexu_read_list_file('directory_sites.txt', $default, array('{url}' => $site));
 }
 function fexu_get_backlink_services() {
     $opt = get_option('fexu_backlink_services', array());
+    if ($opt) return $opt;
     $site = urlencode(get_site_url());
-    return $opt ? $opt : array(
+    $default = array(
         "https://linkcentaur.com/?url=$site",
         "https://instantlinkindexer.com/?url=$site",
         "https://rankersparadise.com/free-seo-tools/backlink-indexer/?url=$site",
@@ -244,12 +305,19 @@ function fexu_get_backlink_services() {
         "https://www.sitelinkindexer.com/?url=$site",
         "https://submit-xseo.com?site=$site"
     );
+    return fexu_read_list_file('backlink_sites.txt', $default, array('{url}' => $site));
 }
 
 // ===== ROBOTS.TXT AUTO-AJOUT + bouton admin =====
 function fexu_update_robots_txt() {
     $robots_path = ABSPATH . 'robots.txt';
     $home = get_site_url();
+    $extra_agents = fexu_read_list_file('robotindex.txt', array());
+    $agents_block = '';
+    foreach ($extra_agents as $agent) {
+        $agents_block .= "User-agent: {$agent}\nAllow: /\n\n";
+    }
+    $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : parse_url($home, PHP_URL_HOST);
     $robots = <<<TXT
 User-agent: *
 Disallow: /wp-content/uploads/wc-logs/
@@ -268,71 +336,10 @@ Sitemap: {$home}/sitemap.xml
 Sitemap: {$home}/sitemap_index.xml
 Sitemap: {$home}/sitemap.rss
 
-Host: {$_SERVER['HTTP_HOST']}
+Host: {$host}
 Crawl-delay: 1
 
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Baiduspider
-Allow: /
-
-User-agent: Yandex
-Allow: /
-
-User-agent: AhrefsBot
-Allow: /
-
-User-agent: SemrushBot
-Allow: /
-
-User-agent: MJ12bot
-Allow: /
-
-User-agent: DotBot
-Allow: /
-
-User-agent: BLEXBot
-Allow: /
-
-User-agent: PetalBot
-Allow: /
-
-User-agent: Sogou
-Allow: /
-
-User-agent: CensysInspect
-Allow: /
-
-User-agent: MegaIndex.ru
-Allow: /
-
-User-agent: GPTBot
-Allow: /
-
-User-agent: AdsBot-Google
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: FacebookExternalHit
-Allow: /
-
-User-agent: Slackbot
-Allow: /
-
-User-agent: TelegramBot
-Allow: /
-
-User-agent: Discordbot
-Allow: /
-
-User-agent: WhatsApp
-Allow: /
+{$agents_block}
 TXT;
     file_put_contents($robots_path, $robots);
 }
