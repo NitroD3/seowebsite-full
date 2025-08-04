@@ -1,3 +1,4 @@
+
 <?php
 // Outil CLI pour pinger les moteurs de recherche listés dans moteurlist.txt
 // Usage : php moteur.php https://votre-site.com
@@ -50,3 +51,4 @@ foreach ($services as $service) {
     echo "Ping : $service\n";
     $doPing($service, $ua);
 }
+

@@ -1,10 +1,3 @@
-<?php
-/*
-Plugin Name: Followersexpress Ultra Indexer Ultimate
-Description: Indexation, backlinks, robots.txt SEO extrême, notifications, dashboard, IA ready. Ping 300+ services, annuaires, logs, cron, admin, tout inclus.
-Version: 5.0
-Author: Ayden Dev
-*/
 
 if (!defined('ABSPATH')) {
     exit;
